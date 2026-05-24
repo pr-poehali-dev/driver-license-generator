@@ -33,289 +33,253 @@ const defaultForm: FormData = {
   photoUrl: "",
 };
 
-/* ─── Card dimensions (ID-1 standard) ─── */
-const W = 500;
-const H = 315;
+/* Оригинальное изображение карточки как фон */
+const BG_URL = "https://cdn.poehali.dev/projects/fe1303d3-5ad6-4bf7-b4cd-e9591822900e/bucket/3001ecbe-095c-4350-adb7-bd94eaae9378.jpg";
+
+/* Размеры карточки в пикселях (соотношение оригинала ~1270:960) */
+const W = 570;
+const H = 360;
+
+/*
+  Координаты полей вычислены из оригинала 1270×960px → масштаб до 570×360
+  scaleX = 570/1270 = 0.449  scaleY = 360/960 = 0.375
+*/
 
 function LicensePreview({ form }: { form: FormData }) {
+  /* категории — какие активны */
+  const activeCats = new Set(form.categories);
+
   return (
     <div
       id="license-preview"
       style={{
-        width: W, height: H,
-        borderRadius: 12,
+        width: W,
+        height: H,
+        borderRadius: 10,
         overflow: "hidden",
         position: "relative",
+        flexShrink: 0,
+        boxShadow: "0 12px 48px rgba(20,40,120,0.30), 0 2px 8px rgba(20,40,120,0.15)",
         fontFamily: "'IBM Plex Sans', sans-serif",
-        boxShadow: "0 12px 48px rgba(20,40,120,0.28), 0 2px 8px rgba(20,40,120,0.14)",
-        userSelect: "none",
       }}
     >
-      {/* ── Background: left blue-purple, right pink-violet ── */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "linear-gradient(105deg, #c8d8f0 0%, #d0c8e8 38%, #e8c8dc 62%, #e0c8e8 100%)",
-      }} />
+      {/* ── Фоновое изображение оригинала ── */}
+      <img
+        src={BG_URL}
+        alt=""
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+        }}
+        crossOrigin="anonymous"
+      />
 
-      {/* ── Diamond grid pattern (left half, blue) ── */}
-      <svg style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} viewBox={`0 0 ${W} ${H}`}>
-        <defs>
-          <pattern id="diamonds" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
-            <rect x="8" y="8" width="16" height="16" rx="2"
-              stroke="#4466cc" strokeWidth="0.9" fill="none"
-              transform="rotate(45 16 16)" />
-          </pattern>
-          {/* pink/golden flower watermark center-right */}
-          <pattern id="flowers" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
-            <circle cx="24" cy="24" r="8" stroke="#c8a060" strokeWidth="0.6" fill="none" opacity="0.35" />
-            <circle cx="24" cy="24" r="14" stroke="#c8a060" strokeWidth="0.4" fill="none" opacity="0.2" />
-            <line x1="24" y1="10" x2="24" y2="38" stroke="#c8a060" strokeWidth="0.4" opacity="0.25" />
-            <line x1="10" y1="24" x2="38" y2="24" stroke="#c8a060" strokeWidth="0.4" opacity="0.25" />
-            <line x1="14" y1="14" x2="34" y2="34" stroke="#c8a060" strokeWidth="0.3" opacity="0.2" />
-            <line x1="34" y1="14" x2="14" y2="34" stroke="#c8a060" strokeWidth="0.3" opacity="0.2" />
-          </pattern>
-        </defs>
-        {/* blue diamonds — covers full card, more visible on left */}
-        <rect x="0" y="0" width={W * 0.55} height={H} fill="url(#diamonds)" opacity="0.55" />
-        <rect x={W * 0.55} y="0" width={W * 0.45} height={H} fill="url(#diamonds)" opacity="0.18" />
-        {/* golden flower pattern — center-right area */}
-        <rect x={W * 0.32} y="0" width={W * 0.6} height={H} fill="url(#flowers)" opacity="0.7" />
-      </svg>
-
-      {/* ── Vertical right strip text watermark ── */}
+      {/* ── Фото владельца (большое, слева) ──
+          На оригинале фото занимает примерно x:30-290, y:110-680 из 1270×960
+          → x: 13-130, y: 41-255 из 570×360  */}
       <div style={{
-        position: "absolute", right: 0, top: 0, bottom: 46, width: 22,
-        background: "rgba(60,80,160,0.08)",
-        borderLeft: "1px solid rgba(60,80,160,0.15)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        writingMode: "vertical-rl",
-        fontSize: 5.5, letterSpacing: 1.8, color: "#3355aa",
-        opacity: 0.55, fontWeight: 600, textTransform: "uppercase",
+        position: "absolute",
+        left: 14,
+        top: 42,
+        width: 116,
+        height: 196,
         overflow: "hidden",
+        borderRadius: 2,
       }}>
-        PERMIS DE CONDUCERE · REPUBLICA · CONDUCERE ·
-      </div>
-
-      {/* ── TOP HEADER ── */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 22, height: 48,
-        background: "rgba(255,255,255,0.42)",
-        borderBottom: "1.5px solid rgba(60,100,200,0.18)",
-        display: "flex", alignItems: "center",
-        padding: "0 14px", gap: 12,
-      }}>
-        {/* MD badge */}
-        <div style={{
-          width: 42, height: 30, border: "2.5px solid #1a44bb",
-          borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(255,255,255,0.85)", flexShrink: 0,
-        }}>
-          <span style={{ fontSize: 11, fontWeight: 900, color: "#1a44bb", letterSpacing: 0.5 }}>MD</span>
-        </div>
-
-        {/* Title */}
-        <div style={{ flex: 1 }}>
+        {form.photoUrl ? (
+          <img
+            src={form.photoUrl}
+            alt="фото"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+              filter: "grayscale(100%) contrast(1.08)",
+            }}
+          />
+        ) : (
           <div style={{
-            fontSize: 11.5, fontWeight: 800, color: "#1a44bb",
-            letterSpacing: 2.5, lineHeight: 1.2,
-          }}>
-            PERMIS DE CONDUCERE
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 1 }}>
-            <div style={{ width: 1, height: 12, background: "#1a44bb", opacity: 0.4 }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: "#1a44bb", letterSpacing: 2 }}>REPUBLICA MOLDOVA</span>
-          </div>
-        </div>
-
-        {/* Coat of arms — right */}
-        <div style={{
-          width: 38, height: 42, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          position: "relative",
-        }}>
-          {/* Shield shape */}
-          <svg width="38" height="42" viewBox="0 0 38 42">
-            <path d="M19 2 L36 10 L36 26 Q36 38 19 42 Q2 38 2 26 L2 10 Z"
-              fill="none" stroke="#1a44bb" strokeWidth="1.2" opacity="0.6" />
-            <text x="19" y="26" textAnchor="middle" fontSize="16" fill="#1a44bb" opacity="0.7">🦅</text>
-          </svg>
-        </div>
-      </div>
-
-      {/* ── MAIN BODY ── */}
-      <div style={{
-        position: "absolute", top: 48, left: 0, right: 22, bottom: 46,
-        display: "flex", padding: "10px 14px 6px 12px", gap: 14,
-      }}>
-
-        {/* Photo column */}
-        <div style={{ width: 96, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          {/* Main photo */}
-          <div style={{
-            width: 96, height: 118,
-            border: "1.5px solid rgba(40,70,180,0.25)",
-            borderRadius: 4,
-            background: "rgba(190,205,230,0.35)",
-            overflow: "hidden",
+            width: "100%", height: "100%",
+            background: "rgba(180,190,210,0.0)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            {form.photoUrl ? (
-              <img src={form.photoUrl} alt="фото"
-                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", filter: "grayscale(100%) contrast(1.05)" }} />
-            ) : (
-              <div style={{ textAlign: "center", opacity: 0.35 }}>
-                <div style={{ fontSize: 28, lineHeight: 1 }}>👤</div>
-                <div style={{ fontSize: 6, color: "#2244aa", marginTop: 3, letterSpacing: 1 }}>PHOTO</div>
-              </div>
-            )}
-          </div>
-
-          {/* Small duplicate photo — bottom right of column */}
-          <div style={{
-            width: 48, height: 58, alignSelf: "flex-end",
-            border: "1px solid rgba(40,70,180,0.2)",
-            borderRadius: 3,
-            background: "rgba(190,205,230,0.2)",
-            overflow: "hidden",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            {form.photoUrl ? (
-              <img src={form.photoUrl} alt=""
-                style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", filter: "grayscale(100%) contrast(1.05) opacity(0.6)" }} />
-            ) : (
-              <div style={{ fontSize: 14, opacity: 0.2 }}>👤</div>
-            )}
-          </div>
-        </div>
-
-        {/* Data fields */}
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 4.5 }}>
-
-          {/* 1. Last name */}
-          <Row num="1." value={form.lastName} size={14} bold />
-
-          {/* 2. First name */}
-          <Row num="2." value={form.firstName} size={14} bold />
-
-          {/* 3. Birth date + place */}
-          <Row num="3." value={`${form.birthDate}  ${form.birthPlace}`} size={12} mono />
-
-          {/* 4a 4b */}
-          <div style={{ display: "flex", alignItems: "baseline", gap: 20 }}>
-            <Row num="4a." value={form.issueDate} size={12} mono />
-            <Row num="4b." value={form.expiryDate} size={12} mono />
-          </div>
-
-          {/* 4c */}
-          <Row num="4c." value={form.issuedBy} size={12} mono />
-
-          {/* 4d */}
-          <Row num="4d." value={form.idNumber} size={12} mono />
-
-          {/* 5. License number */}
-          <Row num="5." value={form.licenseNumber} size={12} mono />
-
-          {/* 7. Signature */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
-            <span style={{ fontSize: 8, color: "#1a44bb", fontWeight: 700, minWidth: 18 }}>7.</span>
-            <svg width="130" height="34" viewBox="0 0 130 34">
-              <path
-                d="M4 26 C10 26 12 10 20 16 C28 22 30 8 40 14 C50 20 52 6 62 12 C72 18 76 8 88 14 C96 18 100 10 110 16 C116 20 120 16 126 18"
-                stroke="#222" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round"
-              />
-              <path d="M4 28 C12 28 18 28 26 28" stroke="#222" strokeWidth="0.8" fill="none" strokeLinecap="round" opacity="0.4" />
-            </svg>
-          </div>
-        </div>
+          }} />
+        )}
       </div>
 
-      {/* ── CATEGORIES BOTTOM BAR ── */}
+      {/* ── Маленькое фото (правее, внизу) ──
+          На оригинале ~x:1000-1150, y:490-700 → x:449-516, y:184-263 */}
       <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 22, height: 46,
-        background: "rgba(248,248,252,0.75)",
-        borderTop: "1.5px solid rgba(60,80,180,0.2)",
-        display: "flex", alignItems: "center",
-        padding: "0 10px", gap: 0,
+        position: "absolute",
+        left: 449,
+        top: 184,
+        width: 55,
+        height: 72,
         overflow: "hidden",
+        borderRadius: 2,
+        opacity: 0.55,
       }}>
-        <span style={{ fontSize: 7.5, color: "#1a44bb", fontWeight: 800, marginRight: 5 }}>9.</span>
+        {form.photoUrl && (
+          <img
+            src={form.photoUrl}
+            alt=""
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              objectPosition: "center top",
+              filter: "grayscale(100%) contrast(1.05)",
+            }}
+          />
+        )}
+      </div>
 
-        {/* Scrolling label strip above */}
-        <div style={{ display: "flex", alignItems: "stretch", gap: 2, flex: 1 }}>
-          {CATEGORIES.map((cat) => {
-            const active = form.categories.includes(cat);
-            const isItalic = cat === "F" || cat === "H" || cat === "I";
-            return (
-              <div key={cat} style={{
-                display: "flex", flexDirection: "column", alignItems: "center", gap: 0,
+      {/* ══ ТЕКСТОВЫЕ ПОЛЯ ══
+          Шрифт на оригинале — жирный моноширинный, тёмно-серый/чёрный.
+          Координаты подобраны по оригиналу.
+      */}
+
+      {/* 1. Фамилия — y≈155/960*360=58, x≈390/1270*570=175 */}
+      <TextField x={155} y={96} value={form.lastName} size={18} />
+
+      {/* 2. Имя — y≈240 */}
+      <TextField x={155} y={128} value={form.firstName} size={18} />
+
+      {/* 3. Дата рождения + место — y≈330 */}
+      <TextField x={155} y={160} value={`${form.birthDate}  ${form.birthPlace}`} size={14.5} />
+
+      {/* 4a. Дата выдачи — y≈415 */}
+      <TextField x={155} y={190} value={form.issueDate} size={14.5} />
+
+      {/* 4b. Действует до — x≈700/1270*570=314 */}
+      <TextField x={320} y={190} value={form.expiryDate} size={14.5} prefix="4b." prefixX={295} prefixY={190} />
+
+      {/* 4c. Кем выдан — y≈500 */}
+      <TextField x={155} y={219} value={form.issuedBy} size={14.5} />
+
+      {/* 4d. Идентификатор — y≈580 */}
+      <TextField x={155} y={247} value={form.idNumber} size={14} />
+
+      {/* 5. Номер — y≈660 */}
+      <TextField x={155} y={275} value={form.licenseNumber} size={14} />
+
+      {/* 7. Подпись — рукописный стиль */}
+      <div style={{
+        position: "absolute",
+        left: 155,
+        top: 296,
+        lineHeight: 1,
+      }}>
+        <svg width="180" height="32" viewBox="0 0 180 32">
+          <path
+            d="M4 24 C14 24 16 8 26 14 C36 20 40 6 52 12 C64 18 68 6 80 12 C92 18 98 8 112 14 C122 18 128 12 140 16 C148 18 156 14 168 16"
+            stroke="#222" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"
+          />
+          <path d="M4 26 C18 26 28 26 40 26" stroke="#222" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.35" />
+        </svg>
+      </div>
+
+      {/* ══ КАТЕГОРИИ — нижняя полоска ══
+          На оригинале блок начинается ~y:790/960*360=296 и идёт до низа.
+          Ячейки начинаются ~x:58/1270*570=26 и заканчиваются ~x:1210/1270*570=543
+          Ширина блока ≈517px на 570 итого — 17 категорий
+      */}
+      <div style={{
+        position: "absolute",
+        bottom: 6,
+        left: 26,
+        right: 36,
+        height: 38,
+        display: "flex",
+        alignItems: "center",
+        gap: 2.5,
+      }}>
+        {CATEGORIES.map((cat) => {
+          const active = activeCats.has(cat);
+          const isItalic = cat === "F" || cat === "H" || cat === "I";
+          const isLong = cat.length >= 3;
+          return (
+            <div
+              key={cat}
+              style={{
+                flex: isLong ? 1.3 : 1,
+                height: 30,
+                border: "1.8px solid #1a3aaa",
+                borderRadius: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: active ? "#1a3aaa" : "rgba(255,255,255,0.15)",
+                minWidth: 0,
+              }}
+            >
+              <span style={{
+                fontSize: isLong ? 7 : 9.5,
+                fontWeight: 900,
+                color: active ? "#fff" : "#1a3aaa",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontStyle: isItalic ? "italic" : "normal",
+                letterSpacing: -0.5,
+                lineHeight: 1,
+                whiteSpace: "nowrap",
               }}>
-                <div style={{
-                  minWidth: cat.length >= 3 ? 22 : 18,
-                  height: 30,
-                  border: "1.5px solid #1a44bb",
-                  borderRadius: 3,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: active ? "#1a44bb" : "rgba(255,255,255,0.8)",
-                  padding: "0 2px",
-                }}>
-                  <span style={{
-                    fontSize: cat.length >= 3 ? 6 : 8,
-                    fontWeight: 800,
-                    color: active ? "#fff" : "#1a44bb",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontStyle: isItalic ? "italic" : "normal",
-                    letterSpacing: -0.3,
-                    lineHeight: 1,
-                  }}>
-                    {cat}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── MRZ / lower text strip ── */}
-      <div style={{
-        position: "absolute", bottom: 46, left: 0, right: 22, height: 12,
-        overflow: "hidden",
-      }}>
-        <div style={{
-          fontSize: 5, color: "#3355aa", opacity: 0.35,
-          letterSpacing: 1.5, fontFamily: "'IBM Plex Mono', monospace",
-          padding: "0 10px", whiteSpace: "nowrap", lineHeight: "12px",
-        }}>
-          ТЕЛСТВО ЗА УПРАВЛЕНИЕ НА МПС · PERMISO DE · PRUKAZ · KØRERT · LICENCJA TAS-SEWQAN · RIJBEWIJS · PRAWO JAZDY · CARTA DE CONDUCERE · VODIČ · VOZNIŠKA · VAIRUOTOJO PAŽYMĖJIMAS
-        </div>
+                {cat}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-/* Helper row component */
-function Row({ num, value, size, bold, mono }: {
-  num: string; value: string; size: number; bold?: boolean; mono?: boolean;
+/* Текстовое поле поверх фона */
+function TextField({
+  x, y, value, size,
+  prefix, prefixX, prefixY,
+}: {
+  x: number; y: number; value: string; size: number;
+  prefix?: string; prefixX?: number; prefixY?: number;
 }) {
   return (
-    <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-      <span style={{ fontSize: 7.5, color: "#1a44bb", fontWeight: 700, minWidth: 20, flexShrink: 0 }}>{num}</span>
+    <>
+      {prefix && (
+        <span style={{
+          position: "absolute",
+          left: prefixX,
+          top: prefixY,
+          fontSize: 8,
+          fontWeight: 700,
+          color: "#1a3aaa",
+          lineHeight: 1,
+        }}>
+          {prefix}
+        </span>
+      )}
       <span style={{
+        position: "absolute",
+        left: x,
+        top: y,
         fontSize: size,
-        fontWeight: bold ? 800 : 600,
-        color: "#1a1a2e",
-        fontFamily: mono ? "'IBM Plex Mono', monospace" : "'IBM Plex Sans', sans-serif",
-        letterSpacing: bold ? 0.4 : 0.2,
-        lineHeight: 1.2,
+        fontWeight: 700,
+        color: "#1a1a1a",
+        fontFamily: "'IBM Plex Mono', monospace",
+        letterSpacing: 0.3,
+        lineHeight: 1,
+        whiteSpace: "nowrap",
+        textShadow: "0 0 3px rgba(255,255,255,0.5)",
       }}>
-        {value || "—"}
+        {value || ""}
       </span>
-    </div>
+    </>
   );
 }
 
-/* ═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════ */
 
 export default function Generator({
   onSave,
@@ -363,7 +327,13 @@ export default function Generator({
     if (!el) return;
     setDownloading(true);
     try {
-      const canvas = await html2canvas(el, { scale: 3, useCORS: true, backgroundColor: null, logging: false });
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: null,
+        logging: false,
+      });
       if (format === "png") {
         const link = document.createElement("a");
         link.download = `ву_${form.lastName}.png`;
@@ -400,11 +370,12 @@ export default function Generator({
       </div>
 
       <div className="flex flex-col xl:flex-row gap-10">
-        {/* Form */}
+
+        {/* ── Форма ── */}
         <div className="flex-1 max-w-xl">
           <div className="bg-card border border-border rounded-lg p-6 space-y-6">
 
-            {/* Photo upload */}
+            {/* Фото */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Фотография</h2>
               <div className="flex items-center gap-4">
@@ -432,7 +403,7 @@ export default function Generator({
               </div>
             </div>
 
-            {/* Text fields */}
+            {/* Поля данных */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Персональные данные</h2>
               <div className="grid grid-cols-2 gap-3">
@@ -451,7 +422,7 @@ export default function Generator({
               </div>
             </div>
 
-            {/* Categories */}
+            {/* Категории */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Категории (9)</h2>
               <div className="flex flex-wrap gap-2">
@@ -473,7 +444,7 @@ export default function Generator({
           </div>
         </div>
 
-        {/* Preview & Actions */}
+        {/* ── Предпросмотр и кнопки ── */}
         <div className="flex flex-col gap-5">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
@@ -516,6 +487,7 @@ export default function Generator({
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
