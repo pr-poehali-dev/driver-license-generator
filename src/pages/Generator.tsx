@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import Icon from "@/components/ui/icon";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 interface FormData {
   lastName: string;
@@ -278,6 +280,7 @@ export default function Generator({
 }) {
   const [form, setForm] = useState<FormData>(defaultForm);
   const [saved, setSaved] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const update = (field: keyof FormData, value: string) => {
@@ -315,8 +318,32 @@ export default function Generator({
     setSaved(true);
   };
 
-  const handleDownload = (format: "pdf" | "png") => {
-    alert(`Скачивание в ${format.toUpperCase()} будет доступно после подключения экспорта. Напишите "подключи скачивание" и я настрою!`);
+  const handleDownload = async (format: "pdf" | "png") => {
+    const el = document.getElementById("license-preview");
+    if (!el) return;
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(el, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: null,
+        logging: false,
+      });
+
+      if (format === "png") {
+        const link = document.createElement("a");
+        link.download = `ву_${form.lastName}_${form.licenseNumber || "без_номера"}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      } else {
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: [85.6, 53.98] });
+        pdf.addImage(imgData, "JPEG", 0, 0, 85.6, 53.98);
+        pdf.save(`ву_${form.lastName}_${form.licenseNumber || "без_номера"}.pdf`);
+      }
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const fields: { label: string; key: keyof FormData; placeholder?: string; span?: boolean }[] = [
@@ -444,16 +471,18 @@ export default function Generator({
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleDownload("pdf")}
-                className="flex items-center justify-center gap-2 py-2.5 rounded border border-border bg-card hover:border-primary/40 text-sm font-medium transition-colors"
+                disabled={downloading}
+                className="flex items-center justify-center gap-2 py-2.5 rounded border border-border bg-card hover:border-primary/40 text-sm font-medium transition-colors disabled:opacity-50"
               >
-                <Icon name="FileDown" size={16} className="text-crimson" />
+                <Icon name={downloading ? "Loader" : "FileDown"} size={16} className={downloading ? "animate-spin text-muted-foreground" : "text-crimson"} />
                 Скачать PDF
               </button>
               <button
                 onClick={() => handleDownload("png")}
-                className="flex items-center justify-center gap-2 py-2.5 rounded border border-border bg-card hover:border-primary/40 text-sm font-medium transition-colors"
+                disabled={downloading}
+                className="flex items-center justify-center gap-2 py-2.5 rounded border border-border bg-card hover:border-primary/40 text-sm font-medium transition-colors disabled:opacity-50"
               >
-                <Icon name="Image" size={16} className="text-primary" />
+                <Icon name={downloading ? "Loader" : "Image"} size={16} className={downloading ? "animate-spin text-muted-foreground" : "text-primary"} />
                 Скачать PNG
               </button>
             </div>
