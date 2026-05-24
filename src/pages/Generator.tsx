@@ -88,16 +88,14 @@ function LicensePreview({ form }: { form: FormData }) {
         boxShadow: "0 12px 48px rgba(20,40,120,0.30), 0 2px 8px rgba(20,40,120,0.15)",
       }}
     >
-      {/* Фон — оригинальная картинка */}
-      <img
-        src={BG_URL}
-        alt=""
-        crossOrigin="anonymous"
+      {/* Фон — оригинальная картинка через CSS (обходит CORS для отображения) */}
+      <div
         style={{
           position: "absolute", inset: 0,
-          width: "100%", height: "100%",
-          objectFit: "fill",
-          display: "block",
+          backgroundImage: `url(${BG_URL})`,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
           pointerEvents: "none",
         }}
       />
