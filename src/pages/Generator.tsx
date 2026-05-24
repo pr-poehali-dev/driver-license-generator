@@ -17,7 +17,7 @@ interface FormData {
   photoUrl: string;
 }
 
-const CATEGORIES = ["A1", "A2", "A", "B1", "B", "C1", "C", "D1", "D", "BE", "C1E", "CE", "D1E", "DE", "F", "H", "I"];
+const CATEGORIES = ["A1","A2","A","B1","B","C1","C","D1","D","BE","C1E","CE","D1E","DE","F","H","I"];
 
 const defaultForm: FormData = {
   lastName: "MORARUȘ",
@@ -33,22 +33,48 @@ const defaultForm: FormData = {
   photoUrl: "",
 };
 
-/* Оригинальное изображение карточки как фон */
 const BG_URL = "https://cdn.poehali.dev/projects/fe1303d3-5ad6-4bf7-b4cd-e9591822900e/bucket/3001ecbe-095c-4350-adb7-bd94eaae9378.jpg";
 
-/* Размеры карточки в пикселях (соотношение оригинала ~1270:960) */
-const W = 570;
-const H = 360;
-
 /*
-  Координаты полей вычислены из оригинала 1270×960px → масштаб до 570×360
-  scaleX = 570/1270 = 0.449  scaleY = 360/960 = 0.375
+  Оригинал: 1270 × 955 px → отображаем 635 × 477 (scale 0.5)
+
+  Замеренные координаты LEFT/TOP в нашем масштабе (÷2 от оригинала):
+
+  Фото большое:  left=15,  top=58,  w=120, h=278
+  Фото маленькое: left=498, top=245, w=62,  h=90
+
+  Текст полей (left = после цифры-индекса, выровнен по оригинальным данным):
+  1. Фамилия:       left=198, top=80
+  2. Имя:           left=198, top=116
+  3. Дата+место:    left=198, top=153
+  4a. Выдан:        left=198, top=190
+  4b. До:           left=360, top=190
+  4c. Орган:        left=198, top=227
+  4d. Идент.:       left=198, top=264
+  5.  Номер:        left=198, top=301
+  7.  Подпись:      left=198, top=335
+
+  Категории: top=405, left=30, right=38, height=44
 */
 
-function LicensePreview({ form }: { form: FormData }) {
-  /* категории — какие активны */
-  const activeCats = new Set(form.categories);
+const W = 635;
+const H = 477;
 
+const txtStyle = (l: number, t: number, sz = 15): React.CSSProperties => ({
+  position: "absolute",
+  left: l,
+  top: t,
+  fontSize: sz,
+  fontWeight: 800,
+  color: "#1a1a1a",
+  fontFamily: "'IBM Plex Mono', monospace",
+  letterSpacing: 0.3,
+  lineHeight: 1,
+  whiteSpace: "nowrap",
+  pointerEvents: "none",
+});
+
+function LicensePreview({ form }: { form: FormData }) {
   return (
     <div
       id="license-preview"
@@ -60,165 +86,126 @@ function LicensePreview({ form }: { form: FormData }) {
         position: "relative",
         flexShrink: 0,
         boxShadow: "0 12px 48px rgba(20,40,120,0.30), 0 2px 8px rgba(20,40,120,0.15)",
-        fontFamily: "'IBM Plex Sans', sans-serif",
       }}
     >
-      {/* ── Фоновое изображение оригинала ── */}
+      {/* Фон — оригинальная картинка */}
       <img
         src={BG_URL}
         alt=""
-        style={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          display: "block",
-        }}
         crossOrigin="anonymous"
+        style={{
+          position: "absolute", inset: 0,
+          width: "100%", height: "100%",
+          objectFit: "fill",
+          display: "block",
+          pointerEvents: "none",
+        }}
       />
 
-      {/* ── Фото владельца (большое, слева) ──
-          На оригинале фото занимает примерно x:30-290, y:110-680 из 1270×960
-          → x: 13-130, y: 41-255 из 570×360  */}
+      {/* Большое фото (левая колонка) */}
       <div style={{
-        position: "absolute",
-        left: 14,
-        top: 42,
-        width: 116,
-        height: 196,
+        position: "absolute", left: 15, top: 58, width: 120, height: 278,
         overflow: "hidden",
-        borderRadius: 2,
       }}>
         {form.photoUrl ? (
           <img
-            src={form.photoUrl}
-            alt="фото"
+            src={form.photoUrl} alt="фото" crossOrigin="anonymous"
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center top",
-              filter: "grayscale(100%) contrast(1.08)",
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center top",
+              filter: "grayscale(100%) contrast(1.1) brightness(0.95)",
             }}
           />
-        ) : (
-          <div style={{
-            width: "100%", height: "100%",
-            background: "rgba(180,190,210,0.0)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }} />
-        )}
+        ) : null}
       </div>
 
-      {/* ── Маленькое фото (правее, внизу) ──
-          На оригинале ~x:1000-1150, y:490-700 → x:449-516, y:184-263 */}
+      {/* Маленькое фото (правый блок) */}
       <div style={{
-        position: "absolute",
-        left: 449,
-        top: 184,
-        width: 55,
-        height: 72,
+        position: "absolute", left: 498, top: 245, width: 62, height: 90,
         overflow: "hidden",
-        borderRadius: 2,
-        opacity: 0.55,
       }}>
-        {form.photoUrl && (
+        {form.photoUrl ? (
           <img
-            src={form.photoUrl}
-            alt=""
+            src={form.photoUrl} alt="" crossOrigin="anonymous"
             style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              objectPosition: "center top",
-              filter: "grayscale(100%) contrast(1.05)",
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center top",
+              filter: "grayscale(100%) contrast(1.05) opacity(0.65)",
             }}
           />
-        )}
+        ) : null}
       </div>
 
-      {/* ══ ТЕКСТОВЫЕ ПОЛЯ ══
-          Шрифт на оригинале — жирный моноширинный, тёмно-серый/чёрный.
-          Координаты подобраны по оригиналу.
-      */}
+      {/* 1. Фамилия */}
+      <span style={txtStyle(198, 80, 17)}>{form.lastName}</span>
 
-      {/* 1. Фамилия — y≈155/960*360=58, x≈390/1270*570=175 */}
-      <TextField x={155} y={96} value={form.lastName} size={18} />
+      {/* 2. Имя */}
+      <span style={txtStyle(198, 116, 17)}>{form.firstName}</span>
 
-      {/* 2. Имя — y≈240 */}
-      <TextField x={155} y={128} value={form.firstName} size={18} />
+      {/* 3. Дата рождения + место */}
+      <span style={txtStyle(198, 153, 15)}>
+        {form.birthDate}&nbsp;&nbsp;{form.birthPlace}
+      </span>
 
-      {/* 3. Дата рождения + место — y≈330 */}
-      <TextField x={155} y={160} value={`${form.birthDate}  ${form.birthPlace}`} size={14.5} />
+      {/* 4a. Дата выдачи */}
+      <span style={txtStyle(198, 190, 15)}>{form.issueDate}</span>
 
-      {/* 4a. Дата выдачи — y≈415 */}
-      <TextField x={155} y={190} value={form.issueDate} size={14.5} />
+      {/* 4b. Дата окончания */}
+      <span style={txtStyle(360, 190, 15)}>{form.expiryDate}</span>
 
-      {/* 4b. Действует до — x≈700/1270*570=314 */}
-      <TextField x={320} y={190} value={form.expiryDate} size={14.5} prefix="4b." prefixX={295} prefixY={190} />
+      {/* 4c. Кем выдан */}
+      <span style={txtStyle(198, 227, 15)}>{form.issuedBy}</span>
 
-      {/* 4c. Кем выдан — y≈500 */}
-      <TextField x={155} y={219} value={form.issuedBy} size={14.5} />
+      {/* 4d. Идентификатор */}
+      <span style={txtStyle(198, 264, 15)}>{form.idNumber}</span>
 
-      {/* 4d. Идентификатор — y≈580 */}
-      <TextField x={155} y={247} value={form.idNumber} size={14} />
+      {/* 5. Номер удостоверения */}
+      <span style={txtStyle(198, 301, 15)}>{form.licenseNumber}</span>
 
-      {/* 5. Номер — y≈660 */}
-      <TextField x={155} y={275} value={form.licenseNumber} size={14} />
-
-      {/* 7. Подпись — рукописный стиль */}
-      <div style={{
-        position: "absolute",
-        left: 155,
-        top: 296,
-        lineHeight: 1,
-      }}>
-        <svg width="180" height="32" viewBox="0 0 180 32">
+      {/* 7. Подпись (SVG) */}
+      <div style={{ position: "absolute", left: 198, top: 333, pointerEvents: "none" }}>
+        <svg width="210" height="44" viewBox="0 0 210 44">
           <path
-            d="M4 24 C14 24 16 8 26 14 C36 20 40 6 52 12 C64 18 68 6 80 12 C92 18 98 8 112 14 C122 18 128 12 140 16 C148 18 156 14 168 16"
-            stroke="#222" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"
+            d="M4 34 C16 34 18 12 30 20 C42 28 46 10 60 18 C74 26 80 8 96 16 C112 24 118 10 136 18 C150 24 158 14 172 20 C182 24 192 18 204 20"
+            stroke="#111" strokeWidth="1.9" fill="none" strokeLinecap="round" strokeLinejoin="round"
           />
-          <path d="M4 26 C18 26 28 26 40 26" stroke="#222" strokeWidth="0.9" fill="none" strokeLinecap="round" opacity="0.35" />
+          <path d="M4 38 C22 38 36 38 54 38" stroke="#111" strokeWidth="1.1" fill="none" strokeLinecap="round" opacity="0.35" />
         </svg>
       </div>
 
-      {/* ══ КАТЕГОРИИ — нижняя полоска ══
-          На оригинале блок начинается ~y:790/960*360=296 и идёт до низа.
-          Ячейки начинаются ~x:58/1270*570=26 и заканчиваются ~x:1210/1270*570=543
-          Ширина блока ≈517px на 570 итого — 17 категорий
-      */}
+      {/* ══ Категории — поверх нижней полоски ══ */}
       <div style={{
         position: "absolute",
-        bottom: 6,
-        left: 26,
-        right: 36,
-        height: 38,
+        top: 405,
+        left: 30,
+        right: 38,
+        height: 44,
         display: "flex",
         alignItems: "center",
-        gap: 2.5,
+        gap: 3,
+        pointerEvents: "none",
       }}>
         {CATEGORIES.map((cat) => {
-          const active = activeCats.has(cat);
+          const active = form.categories.includes(cat);
           const isItalic = cat === "F" || cat === "H" || cat === "I";
-          const isLong = cat.length >= 3;
+          const long = cat.length >= 3;
           return (
             <div
               key={cat}
               style={{
-                flex: isLong ? 1.3 : 1,
-                height: 30,
-                border: "1.8px solid #1a3aaa",
+                flex: long ? 1.5 : 1,
+                height: 36,
+                border: "2px solid #1a3aaa",
                 borderRadius: 3,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                background: active ? "#1a3aaa" : "rgba(255,255,255,0.15)",
+                background: active ? "#1a3aaa" : "rgba(255,255,255,0.06)",
                 minWidth: 0,
               }}
             >
               <span style={{
-                fontSize: isLong ? 7 : 9.5,
+                fontSize: long ? 7.5 : 11,
                 fontWeight: 900,
                 color: active ? "#fff" : "#1a3aaa",
                 fontFamily: "'IBM Plex Mono', monospace",
@@ -237,49 +224,7 @@ function LicensePreview({ form }: { form: FormData }) {
   );
 }
 
-/* Текстовое поле поверх фона */
-function TextField({
-  x, y, value, size,
-  prefix, prefixX, prefixY,
-}: {
-  x: number; y: number; value: string; size: number;
-  prefix?: string; prefixX?: number; prefixY?: number;
-}) {
-  return (
-    <>
-      {prefix && (
-        <span style={{
-          position: "absolute",
-          left: prefixX,
-          top: prefixY,
-          fontSize: 8,
-          fontWeight: 700,
-          color: "#1a3aaa",
-          lineHeight: 1,
-        }}>
-          {prefix}
-        </span>
-      )}
-      <span style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        fontSize: size,
-        fontWeight: 700,
-        color: "#1a1a1a",
-        fontFamily: "'IBM Plex Mono', monospace",
-        letterSpacing: 0.3,
-        lineHeight: 1,
-        whiteSpace: "nowrap",
-        textShadow: "0 0 3px rgba(255,255,255,0.5)",
-      }}>
-        {value || ""}
-      </span>
-    </>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════ */
 
 export default function Generator({
   onSave,
@@ -328,11 +273,7 @@ export default function Generator({
     setDownloading(true);
     try {
       const canvas = await html2canvas(el, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: null,
-        logging: false,
+        scale: 3, useCORS: true, allowTaint: true, backgroundColor: null, logging: false,
       });
       if (format === "png") {
         const link = document.createElement("a");
@@ -371,11 +312,9 @@ export default function Generator({
 
       <div className="flex flex-col xl:flex-row gap-10">
 
-        {/* ── Форма ── */}
+        {/* Форма */}
         <div className="flex-1 max-w-xl">
           <div className="bg-card border border-border rounded-lg p-6 space-y-6">
-
-            {/* Фото */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Фотография</h2>
               <div className="flex items-center gap-4">
@@ -403,7 +342,6 @@ export default function Generator({
               </div>
             </div>
 
-            {/* Поля данных */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Персональные данные</h2>
               <div className="grid grid-cols-2 gap-3">
@@ -422,7 +360,6 @@ export default function Generator({
               </div>
             </div>
 
-            {/* Категории */}
             <div>
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">Категории (9)</h2>
               <div className="flex flex-wrap gap-2">
@@ -444,7 +381,7 @@ export default function Generator({
           </div>
         </div>
 
-        {/* ── Предпросмотр и кнопки ── */}
+        {/* Предпросмотр */}
         <div className="flex flex-col gap-5">
           <div>
             <div className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
@@ -487,7 +424,6 @@ export default function Generator({
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
